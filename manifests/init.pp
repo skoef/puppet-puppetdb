@@ -302,7 +302,7 @@ class puppetdb (
   $http_host           = params_lookup( 'http_host' ),
   $http_port           = params_lookup( 'http_port' ),
   $protocol            = params_lookup( 'protocol' )
-  ) inherits puppetdb::params {
+) inherits puppetdb::params {
 
   $bool_install_prerequisites = any2bool($install_prerequisites)
   $bool_source_dir_purge=any2bool($source_dir_purge)
@@ -402,21 +402,23 @@ class puppetdb (
   # but if something kills the keystore
   # we have to regenerate it.
   if versioncmp($puppetdbversion, '1.4') == -1 {
-    $ssl_setup_creates = '/etc/puppetdb/ssl/keystore.jks'
-    $ssl_setup_command = '/usr/sbin/puppetdb-ssl-setup'
+    $ssl_setup_creates = "${puppetdb::ssl_dir}/keystore.jks"
+    $manage_ssl_setup_command = $puppetdb::ssl_legacy_command
   } else {
-    $ssl_setup_creates = '/etc/puppetdb/ssl/private.pem'
-    $ssl_setup_command = '/usr/sbin/puppetdb ssl-setup'
-    file {'/etc/puppetdb/conf.d/jetty.ini':
+    $ssl_setup_creates = "${puppetdb::ssl_dir}/private.pem"
+    $manage_ssl_setup_command = $puppetdb::ssl_setup_command
+    file { 'puppetdb.jetty':
       ensure  => $puppetdb::manage_file,
+      path    => $puppetdb::jetty_file,
       content => template($jetty_template),
       require => Package['puppetdb'],
       notify  => Service['puppetdb'],
     }
   }
+
   if $puppetdb::bool_absent == false {
     exec { 'puppetdb.ssl.setup':
-      command => $ssl_setup_command,
+      command => $manage_ssl_setup_command,
       creates => $ssl_setup_creates,
       notify  => Service['puppetdb'],
       require => Package['puppetdb'];
@@ -430,6 +432,22 @@ class puppetdb (
     hasstatus  => $puppetdb::service_status,
     pattern    => $puppetdb::process,
     require    => Package['puppetdb'],
+  }
+
+  if $::operatingsystem =~ /(?i:FreeBSD)/ {
+    file_line { 'puppetdb.rc.conf.user':
+      path   => $puppetdb::config_file_init,
+      line   => "puppetdb_user=\"${puppetdb::process_user}\"",
+      match  => '^puppetdb_user=',
+      notify => Service['puppetdb'],
+    }
+
+    file_line { 'puppetdb.rc.conf.group':
+      path   => $puppetdb::config_file_init,
+      line   => "puppetdb_group=\"${puppetdb::process_group}\"",
+      match  => '^puppetdb_group=',
+      notify => Service['puppetdb'],
+    }
   }
 
   file { 'puppetdb.conf':
@@ -461,6 +479,12 @@ class puppetdb (
     }
   }
 
+  file { 'puppetdb.data':
+    ensure => directory,
+    path   => $puppetdb::data_dir,
+    owner  => $puppetdb::process_user,
+    group  => $puppetdb::process_group,
+  }
 
   ### Include custom class if $my_class is set
   if $puppetdb::my_class {

@@ -11,7 +11,7 @@ port = <%= scope.lookupvar('puppetdb::http_port') %>
 <% end -%>
 <% if scope.lookupvar('puppetdb::https_host').length >0 -%>
 # The following are SSL specific settings. They can be configured
-# automatically with the tool puppetdb-ssl-setup, which is normally
+# automatically with the tool `puppetdb ssl-setup`, which is normally
 # ran during package installation.
 
 # The host or IP address to listen on for HTTPS connections
@@ -21,12 +21,12 @@ ssl-host = <%= scope.lookupvar('puppetdb::https_host') %>
 ssl-port = <%= scope.lookupvar('puppetdb::https_port') %>
 
 # Private key path
-ssl-key = /etc/puppetdb/ssl/private.pem
+ssl-key = <%= scope.lookupvar('puppetdb::ssl_dir') %>/private.pem
 
 # Public certificate path
-ssl-cert = /etc/puppetdb/ssl/public.pem
+ssl-cert = <%= scope.lookupvar('puppetdb::ssl_dir') %>/public.pem
 
 # Certificate authority path
-ssl-ca-cert = /etc/puppetdb/ssl/ca.pem
+ssl-ca-cert = <%= scope.lookupvar('puppetdb::ssl_dir') %>/ca.pem
 <% end -%>
 

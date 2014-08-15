@@ -48,15 +48,28 @@ class puppetdb::params {
   }
 
   $process_user = $::operatingsystem ? {
-    default => 'puppetdb',
+    /(?i:FreeBSD)/ => 'puppet',
+    default        => 'puppetdb',
+  }
+
+  $process_group = $::operatingsystem ? {
+    /(?i:FreeBSD)/ => 'puppet',
+    default        => 'puppetdb',
   }
 
   $config_dir = $::operatingsystem ? {
-    default => '/etc/puppetdb/conf.d',
+    /(?i:FreeBSD)/ => '/usr/local/etc/puppetdb/conf.d',
+    default        => '/etc/puppetdb/conf.d',
+  }
+
+  $ssl_dir = $::operatingsystem ? {
+    /(?i:FreeBSD)/ => '/usr/local/etc/puppetdb/ssl',
+    default        => '/etc/puppetdb/ssl',
   }
 
   $config_file = $::operatingsystem ? {
-    default => '/etc/puppetdb/conf.d/database.ini',
+    /(?i:FreeBSD)/ => '/usr/local/etc/puppetdb/conf.d/database.ini',
+    default        => '/etc/puppetdb/conf.d/database.ini',
   }
 
   $config_file_mode = $::operatingsystem ? {
@@ -64,25 +77,35 @@ class puppetdb::params {
   }
 
   $config_file_owner = $::operatingsystem ? {
-    default => 'puppetdb',
+    /(?i:FreeBSD)/ => 'root',
+    default        => 'puppetdb',
   }
 
   $config_file_group = $::operatingsystem ? {
-    default => 'puppetdb',
+    /(?i:FreeBSD)/ => 'puppet',
+    default        => 'puppetdb',
   }
 
   $config_file_init = $::operatingsystem ? {
     /(?i:Debian|Ubuntu|Mint)/ => '/etc/default/puppetdb',
+    /(?i:FreeBSD)/            => '/etc/rc.conf.d/puppetdb',
     default                   => '/etc/sysconfig/puppetdb',
   }
 
+  $jetty_file = $::operatingsystem ? {
+    /(?i:FreeBSD)/ => '/usr/local/etc/puppetdb/conf.d/jetty.ini',
+    default        => '/etc/puppetdb/conf.d/jetty.ini',
+  }
+
   $pid_file = $::operatingsystem ? {
-    /(?i:RedHat|CentOS)/  => '/var/run/puppetdb/puppetdb',
-    default               => '/var/run/puppetdb.pid',
+    /(?i:RedHat|CentOS)/ => '/var/run/puppetdb/puppetdb',
+    /(?i:FreeBSD)/       => '/var/run/puppetdb/puppetdb.pid',
+    default              => '/var/run/puppetdb.pid',
   }
 
   $data_dir = $::operatingsystem ? {
-    default => '/var/lib/puppetdb',
+    /(?i:FreeBSD)/ => '/var/db/puppetdb',
+    default        => '/var/lib/puppetdb',
   }
 
   $log_dir = $::operatingsystem ? {
@@ -92,6 +115,12 @@ class puppetdb::params {
   $log_file = $::operatingsystem ? {
     default => '/var/log/puppetdb/puppetdb.log',
   }
+
+  $ssl_setup_command = $::operatingsystem ? {
+    /(?i:FreeBSD)/ => '/usr/local/sbin/puppetdb ssl-setup',
+    default => '/usr/sbin/puppetdb ssl-setup',
+  }
+  $ssl_legacy_command = '/usr/sbin/puppetdb-ssl-setup'
 
   $https_host = $::fqdn
   $https_port = '8081'
